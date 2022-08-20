@@ -3,7 +3,7 @@
 
 cmake_minimum_required (VERSION 3.13)
 
-set(FX_VERSION 11.27)
+set(FX_VERSION 11.28)
 
 project (Effects11
   VERSION ${FX_VERSION}
@@ -69,6 +69,8 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}>
   PRIVATE Binary/)
 
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_11)
+
 if(MSVC)
     # Use max Warning Level
     string(REPLACE "/W3 " "/W4 " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -96,12 +98,12 @@ install(TARGETS ${PROJECT_NAME}
 
 configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}-config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
+  INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 install(EXPORT ${PROJECT_NAME}-targets
   FILE ${PROJECT_NAME}-targets.cmake
   NAMESPACE Microsoft::
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 install(FILES inc/d3dx11effect.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME})
@@ -109,10 +111,15 @@ install(FILES inc/d3dx11effect.h
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake
     ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake
-  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME}/cmake/)
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/${PACKAGE_NAME})
 
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /fp:fast "$<$<NOT:$<CONFIG:DEBUG>>:/guard:cf>")
+
+    if((MSVC_VERSION GREATER_EQUAL 1928) AND (CMAKE_SIZEOF_VOID_P EQUAL 8)
+       AND ((NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang")) OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 13.0)))
+      target_compile_options(${PROJECT_NAME} PRIVATE "$<$<NOT:$<CONFIG:DEBUG>>:/guard:ehcont>")
+    endif()
 endif()
 
 if(NOT ${DIRECTX_ARCH} MATCHES "^arm")
