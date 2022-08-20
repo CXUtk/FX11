@@ -1,12 +1,17 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 15.0.27703.2000
+VisualStudioVersion = 17.2.32519.379
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Effects11", "Effects11_2022_Win10.vcxproj", "{DF460EAB-570D-4B50-9089-2E2FC801BF38}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{331B6934-646A-4AD4-87A9-318421E18CE5}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EffectCompiler", "EffectCompiler\EffectCompiler.vcxproj", "{4B9FBB37-1347-4CF0-B906-23D29D3857F1}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DF460EAB-570D-4B50-9089-2E2FC801BF38} = {DF460EAB-570D-4B50-9089-2E2FC801BF38}
 	EndProjectSection
 EndProject
 Global
@@ -31,6 +36,18 @@ Global
 		{DF460EAB-570D-4B50-9089-2E2FC801BF38}.Release|Win32.Build.0 = Release|Win32
 		{DF460EAB-570D-4B50-9089-2E2FC801BF38}.Release|x64.ActiveCfg = Release|x64
 		{DF460EAB-570D-4B50-9089-2E2FC801BF38}.Release|x64.Build.0 = Release|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Debug|Win32.Build.0 = Debug|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Debug|x64.ActiveCfg = Debug|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Debug|x64.Build.0 = Debug|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Profile|Win32.ActiveCfg = Debug|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Profile|Win32.Build.0 = Debug|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Profile|x64.ActiveCfg = Debug|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Profile|x64.Build.0 = Debug|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Release|Win32.ActiveCfg = Release|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Release|Win32.Build.0 = Release|Win32
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Release|x64.ActiveCfg = Release|x64
+		{4B9FBB37-1347-4CF0-B906-23D29D3857F1}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

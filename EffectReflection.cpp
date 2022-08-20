@@ -57,7 +57,6 @@ ID3DX11EffectVariable * GetAnnotationByIndexHelper(const char *pClassName, uint3
         DPF(0, "%s::GetAnnotationByIndex: Invalid index (%u, total: %u)", pClassName, Index, AnnotationCount);
         return &g_InvalidScalarVariable;
     }
-
     return pAnnotations + Index;
 }
 

@@ -93,7 +93,7 @@
     <TargetName>Effects11d</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
-    <OutDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>Bin</OutDir>
     <IntDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>Effects11d</TargetName>
   </PropertyGroup>
@@ -103,7 +103,7 @@
     <TargetName>Effects11</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
-    <OutDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>Bin</OutDir>
     <IntDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>Effects11</TargetName>
   </PropertyGroup>
@@ -113,7 +113,7 @@
     <TargetName>Effects11</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
-    <OutDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>Bin</OutDir>
     <IntDir>Bin\Desktop_2022_Win10\$(Platform)\$(Configuration)\</IntDir>
     <TargetName>Effects11</TargetName>
   </PropertyGroup>
