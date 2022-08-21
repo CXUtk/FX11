@@ -16,6 +16,10 @@ if(FAILED(hr))\
 Microsoft::WRL::ComPtr<ID3D11Device>        g_d3dDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> g_d3dContext;
 
+
+std::map<ID3DX11EffectConstantBuffer*, int> constBuffer_indexMap;
+
+
 void Usage()
 {
     printf("Usage: Effect Compiler\n");
@@ -96,6 +100,74 @@ Microsoft::WRL::ComPtr<ID3DX11Effect> GetEffect(const wchar_t* filename)
     }
 }
 
+#define GET_SHADER(shaderType) hr = pass->Get##shaderType##Desc(&desc);\
+CHECK_RESULT(("Failed to get " + std::string(#shaderType) + " desc").c_str(), shaders);\
+if (desc.pShaderVariable->IsValid())\
+{\
+    shaders.push_back({shaderType,ReflectShader(desc.pShaderVariable)});\
+}\
+
+std::shared_ptr<PShaderReflectData> ReflectShader(ID3DX11EffectShaderVariable* shader)
+{
+    HRESULT hr;
+    PShaderReflectData data;
+    D3DX11_EFFECT_SHADER_DESC desc;
+    hr = shader->GetShaderDesc(0, &desc);
+    CHECK_RESULT("Fail to get shader desc", nullptr);
+
+    ID3D11ShaderReflection* reflector = nullptr;
+    hr = D3DReflect(desc.pBytecode, desc.BytecodeLength, IID_ID3D11ShaderReflection, (void**)&reflector);
+    CHECK_RESULT("Fail to reflect", nullptr);
+
+    reflector->GetDesc(&data.desc);
+
+    std::vector<int> constBufferIndex;
+    for (size_t i = 0; i < data.desc.ConstantBuffers; i++)
+    {
+        auto cb = reflector->GetConstantBufferByIndex(i);
+        PShaderBuffer cbuffer;
+        hr = cb->GetDesc(&cbuffer.desc);
+        for (size_t j = 0; j < cbuffer.desc.Variables; j++)
+        {
+            auto variable = cb->GetVariableByIndex(j);
+            D3D11_SHADER_VARIABLE_DESC vDesc;
+            hr = variable->GetDesc(&vDesc);
+
+            auto type = variable->GetType();
+            D3D11_SHADER_TYPE_DESC tDesc;
+            type->GetDesc(&tDesc);
+
+            cbuffer.variables.push_back(PShaderVariable{ vDesc, tDesc });
+        }
+        data.constBuffers.push_back(cbuffer);
+    }
+    
+    for (size_t i = 0; i < data.desc.BoundResources; i++)
+    {
+        D3D11_SHADER_INPUT_BIND_DESC rDesc;
+        hr = reflector->GetResourceBindingDesc(i, &rDesc);
+        data.inputs.push_back(rDesc);
+    }
+
+    return std::make_shared<PShaderReflectData>(data);
+}
+
+std::vector<PEffectShader> GetShaders(ID3DX11EffectPass* pass)
+{
+    HRESULT hr;
+    std::vector<PEffectShader> shaders;
+    D3DX11_PASS_SHADER_DESC desc;
+    
+    GET_SHADER(VertexShader);
+    GET_SHADER(PixelShader);
+    GET_SHADER(HullShader);
+    GET_SHADER(GeometryShader);
+    GET_SHADER(ComputeShader);
+    GET_SHADER(DomainShader);
+
+    return shaders;
+}
+
 std::vector<PEffectVariable> GetAnnotations(ID3DX11EffectPass* pass, const D3DX11_PASS_DESC& desc)
 {
     HRESULT hr;
@@ -131,10 +203,15 @@ std::vector<PEffectPass> GetPasses(ID3DX11EffectTechnique* technique, const D3DX
         PEffectPass p = {};
         p.Desc = passDesc;
         p.Annotations = GetAnnotations(pass, passDesc);
+        p.Shaders = GetShaders(pass);
+        
+
+
         passes.push_back(p);
     }
     return passes;
 }
+
 
 PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effect> effect, const D3DX11_EFFECT_DESC& desc)
 {
@@ -163,7 +240,7 @@ PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effec
         techniques.push_back(tech);
     }
 
-    std::map<ID3DX11EffectConstantBuffer*, int> constBuffer_indexMap;
+
     std::vector<PEffectConstBuffer> constBuffers;
     for (int i = 0; i < desc.ConstantBuffers; i++)
     {
@@ -194,10 +271,13 @@ PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effec
         globalVariables.push_back(p);
 
         auto constBuffer = variable->GetParentConstantBuffer();
-        if (constBuffer != nullptr)
+        if (constBuffer->IsValid())
         {
-            int index = constBuffer_indexMap[constBuffer];
-            constBuffers[index].Variables.push_back(p);
+            if (constBuffer_indexMap.find(constBuffer) != constBuffer_indexMap.end())
+            {
+                int index = constBuffer_indexMap[constBuffer];
+                constBuffers[index].Variables.push_back(p);
+            }
         }
     }
 
@@ -206,11 +286,11 @@ PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effec
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
-    {
-        Usage();
-        return 0;
-    }
+    //if (argc < 2)
+    //{
+    //    Usage();
+    //    return 0;
+    //}
     auto effect = GetEffect(L"Test.fx");
     if (!effect)
     {
