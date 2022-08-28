@@ -110,3 +110,42 @@ void Base64Decode(const std::string& source, std::string& decodeString)
         }
     }
 }
+
+void RegularizeString(const std::string& source, std::string& destString)
+{
+    for (auto c : source)
+    {
+        if (c == '\n')
+        {
+            destString.append("\\n");
+        }
+        else if (c == '\r')
+        {
+            destString.append("\\r");
+        }
+        else if (c == '\t')
+        {
+            destString.append("\\t");
+        }
+        else if (c == '\b')
+        {
+            destString.append("\\b");
+        }
+        else if (c == '\v')
+        {
+            destString.append("\\v");
+        }
+        else if (c == '\f')
+        {
+            destString.append("\\f");
+        }
+        else if (c == '\0')
+        {
+            destString.append("\\0");
+        }
+        else
+        {
+            destString.push_back(c);
+        }
+    }
+}

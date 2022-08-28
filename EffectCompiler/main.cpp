@@ -467,7 +467,10 @@ SJson::JsonNode GetShaderCodeJson(const PEffectShader& shaderDesc)
     SJson::JsonNode node;
     std::string hlsl;
     Base64Encode(shaderDesc.Data->EffectDesc.pBytecode, shaderDesc.Data->EffectDesc.BytecodeLength, hlsl);
-    std::string glsl = Compile2GLSL(shaderDesc.Data->EffectDesc.pBytecode);
+
+    std::string glslOut = Compile2GLSL(shaderDesc.Data->EffectDesc.pBytecode);
+    std::string glsl;
+    RegularizeString(glslOut, glsl);
 
     node["DXBC"] = hlsl;
     node["GLSL"] = glsl;

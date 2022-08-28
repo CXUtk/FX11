@@ -36,3 +36,5 @@ static inline bool IsBase64(unsigned char c)
 void Base64Encode(const uint8_t* source, int32_t size, std::string& encodeString);
 
 void Base64Decode(const std::string& source, std::string& decodeString);
+
+void RegularizeString(const std::string& source, std::string& destString);
