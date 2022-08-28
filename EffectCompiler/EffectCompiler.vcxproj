@@ -143,12 +143,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DXBC2GLSL\DXBC2GLSL.cpp" />
+    <ClCompile Include="DXBC2GLSL\DXBC2GLSLCmd.cpp" />
+    <ClCompile Include="DXBC2GLSL\DXBCParse.cpp" />
+    <ClCompile Include="DXBC2GLSL\GLSLGen.cpp" />
+    <ClCompile Include="DXBC2GLSL\ShaderDefs.cpp" />
+    <ClCompile Include="DXBC2GLSL\ShaderParse.cpp" />
+    <ClCompile Include="DXBC2GLSL\Utils.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="StringUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DXBC2GLSL\DXBC.hpp" />
+    <ClInclude Include="DXBC2GLSL\DXBC2GLSL.hpp" />
+    <ClInclude Include="DXBC2GLSL\GLSLGen.hpp" />
+    <ClInclude Include="DXBC2GLSL\Shader.hpp" />
+    <ClInclude Include="DXBC2GLSL\ShaderDefs.hpp" />
+    <ClInclude Include="DXBC2GLSL\Utils.hpp" />
     <ClInclude Include="effectlayout.h" />
     <ClInclude Include="SJson.hpp" />
     <ClInclude Include="SRefl.hpp" />
+    <ClInclude Include="StringUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

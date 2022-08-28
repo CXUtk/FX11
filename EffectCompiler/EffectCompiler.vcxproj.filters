@@ -13,9 +13,36 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="DXBC2GLSL">
+      <UniqueIdentifier>{a7e7f3ff-1435-445d-adca-83bd9c92c0f5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\DXBC2GLSL.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\DXBC2GLSLCmd.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\DXBCParse.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\GLSLGen.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\ShaderDefs.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\ShaderParse.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="DXBC2GLSL\Utils.cpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClCompile>
+    <ClCompile Include="StringUtils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -27,6 +54,27 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SRefl.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\DXBC.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\DXBC2GLSL.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\GLSLGen.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\Shader.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\ShaderDefs.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="DXBC2GLSL\Utils.hpp">
+      <Filter>DXBC2GLSL</Filter>
+    </ClInclude>
+    <ClInclude Include="StringUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

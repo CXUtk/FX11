@@ -5,6 +5,10 @@
 #include <wrl.h>
 
 #include "effectlayout.h"
+#include "DXBC2GLSL/DXBC2GLSL.hpp"
+#include "StringUtils.h"
+
+using namespace effectCompiler;
 
 #define CHECK_RESULT(message, ret)\
 if(FAILED(hr))\
@@ -27,8 +31,11 @@ SJson::JsonNode GetTechniquesJson(const std::vector<PEffectTechnique> techniques
 SJson::JsonNode GetPassJson(const std::vector<PEffectPass> passes);
 SJson::JsonNode GetShadersJson(const std::vector<PEffectShader> shaders);
 SJson::JsonNode GetResourceBindingsJson(const std::vector<D3D11_SHADER_INPUT_BIND_DESC>&inputDesc);
+SJson::JsonNode GetShaderCodeJson(const PEffectShader & shaderDesc);
 
 SJson::JsonNode GetVector4Json(const float vec[4]);
+
+std::string Compile2GLSL(const void* dxbcCode);
 
 
 void Usage()
@@ -118,7 +125,7 @@ if (desc.pShaderVariable->IsValid())\
     auto shaderDesc = ReflectShader(desc.pShaderVariable);\
     if(shaderDesc)\
     {\
-        shaders.push_back(PEffectShader{ ShaderType::##shaderType, shaderDesc}); \
+        shaders.push_back(PEffectShader{ effectCompiler::ShaderType::##shaderType, shaderDesc}); \
     }\
 }\
 
@@ -169,6 +176,7 @@ std::shared_ptr<PShaderReflectData> ReflectShader(ID3DX11EffectShaderVariable* s
         data.Inputs.push_back(rDesc);
     }
 
+    data.EffectDesc = desc;
     return std::make_shared<PShaderReflectData>(data);
 }
 
@@ -177,7 +185,7 @@ std::vector<PEffectShader> GetShaders(ID3DX11EffectPass* pass)
     HRESULT hr;
     std::vector<PEffectShader> shaders;
     D3DX11_PASS_SHADER_DESC desc;
-    
+
     GET_SHADER(VertexShader);
     GET_SHADER(PixelShader);
     GET_SHADER(HullShader);
@@ -432,8 +440,9 @@ SJson::JsonNode GetShadersJson(const std::vector<PEffectShader> shaders)
     for (auto& shader : shaders)
     {
         SJson::JsonNode shaderNode;
-        shaderNode["Type"] = SRefl::EnumInfo<ShaderType>::enum_to_string(shader.ShaderType);
+        shaderNode["Type"] = SRefl::EnumInfo<effectCompiler::ShaderType>::enum_to_string(shader.ShaderType);
         shaderNode["ResouceBindings"] = GetResourceBindingsJson(shader.Data->Inputs);
+        shaderNode["Codes"] = GetShaderCodeJson(shader);
         node.push_back(shaderNode);
     }
     return node;
@@ -453,7 +462,96 @@ SJson::JsonNode GetResourceBindingsJson(const std::vector<D3D11_SHADER_INPUT_BIN
     return node;
 }
 
+SJson::JsonNode GetShaderCodeJson(const PEffectShader& shaderDesc)
+{
+    SJson::JsonNode node;
+    std::string hlsl;
+    Base64Encode(shaderDesc.Data->EffectDesc.pBytecode, shaderDesc.Data->EffectDesc.BytecodeLength, hlsl);
+    std::string glsl = Compile2GLSL(shaderDesc.Data->EffectDesc.pBytecode);
+
+    node["DXBC"] = hlsl;
+    node["GLSL"] = glsl;
+    return node;
+}
+
 SJson::JsonNode GetVector4Json(const float vec[4])
 {
     return SJson::JsonNode({vec[0], vec[1], vec[2], vec[3]});
+}
+
+std::string Compile2GLSL(const void* dxbcCode)
+{
+    std::string glsl;
+    try
+    {
+        DXBC2GLSL::DXBC2GLSL dxbc2glsl;
+        dxbc2glsl.FeedDXBC(dxbcCode, true, true, STP_Fractional_Odd, STOP_Triangle_CW, GSV_430);
+        glsl = dxbc2glsl.GLSLString();
+
+        if (dxbc2glsl.NumInputParams() > 0)
+        {
+            std::cout << "Input:" << std::endl;
+            for (uint32_t i = 0; i < dxbc2glsl.NumInputParams(); ++i)
+            {
+                std::cout << "\t" << dxbc2glsl.InputParam(i).semantic_name
+                    << dxbc2glsl.InputParam(i).semantic_index << std::endl;
+            }
+            std::cout << std::endl;
+        }
+        if (dxbc2glsl.NumOutputParams() > 0)
+        {
+            std::cout << "Output:" << std::endl;
+            for (uint32_t i = 0; i < dxbc2glsl.NumOutputParams(); ++i)
+            {
+                std::cout << "\t" << dxbc2glsl.OutputParam(i).semantic_name
+                    << dxbc2glsl.OutputParam(i).semantic_index << std::endl;
+            }
+            std::cout << std::endl;
+        }
+
+        for (uint32_t i = 0; i < dxbc2glsl.NumCBuffers(); ++i)
+        {
+            std::cout << "CBuffer " << i << ":" << std::endl;
+            for (uint32_t j = 0; j < dxbc2glsl.NumVariables(i); ++j)
+            {
+                std::cout << "\t" << dxbc2glsl.VariableName(i, j)
+                    << ' ' << (dxbc2glsl.VariableUsed(i, j) ? "USED" : "UNUSED");
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+
+        if (dxbc2glsl.NumResources() > 0)
+        {
+            std::cout << "Resource:" << std::endl;
+            for (uint32_t i = 0; i < dxbc2glsl.NumResources(); ++i)
+            {
+                std::cout << "\t" << dxbc2glsl.ResourceName(i) << " : "
+                    << dxbc2glsl.ResourceBindPoint(i)
+                    << ' ' << (dxbc2glsl.ResourceUsed(i) ? "USED" : "UNUSED");
+                std::cout << std::endl;
+            }
+            std::cout << std::endl;
+        }
+
+        if (dxbc2glsl.GSInputPrimitive() != SP_Undefined)
+        {
+            std::cout << "GS input primitive: " << ShaderPrimitiveName(dxbc2glsl.GSInputPrimitive()) << std::endl;
+
+            std::cout << "GS output:" << std::endl;
+            for (uint32_t i = 0; i < dxbc2glsl.NumGSOutputTopology(); ++i)
+            {
+                std::cout << "\t" << ShaderPrimitiveTopologyName(dxbc2glsl.GSOutputTopology(i)) << std::endl;
+            }
+
+            std::cout << "Max GS output vertex " << dxbc2glsl.MaxGSOutputVertex() << std::endl << std::endl;
+        }
+    }
+    catch (std::exception& ex)
+    {
+        std::cout << "Error(s) in conversion:" << std::endl;
+        std::cout << ex.what() << std::endl;
+        std::cout << "Please send this information and your bytecode file to webmaster at klayge.org. We'll fix this ASAP." << std::endl;
+    }
+    return glsl;
 }
