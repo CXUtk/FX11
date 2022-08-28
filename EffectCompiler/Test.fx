@@ -24,6 +24,8 @@ RWStructuredBuffer<uint>	_dustsDeadList : register(u2);
 StructuredBuffer<Dust2D>	_dustsReadonly : register(t0);
 Texture2D<float4>			_TileSDF;
 
+uint _TestVariable;
+
 static float2 defaultVertexPos[4] =
 {
 	float2(-0.5, 0.5),
@@ -241,7 +243,7 @@ PSInput VertexShaderFunction_Instanced(VSInput_Instanced input)
 GSInput VertexShaderFunction_Billboard(VSInput_Instanced input)
 {
 	GSInput output;
-	output.InstanceId = input.InstanceId;
+	output.InstanceId = input.InstanceId + _TestVariable;
 	return output;
 }
 

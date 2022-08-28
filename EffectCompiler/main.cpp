@@ -1,7 +1,7 @@
-#include <iostream>
+#define NOMINMAX
+
+#include "SJson.hpp"
 #include <fstream>
-#include <vector>
-#include <map>
 #include <wrl.h>
 
 #include "effectlayout.h"
@@ -16,8 +16,19 @@ if(FAILED(hr))\
 Microsoft::WRL::ComPtr<ID3D11Device>        g_d3dDevice;
 Microsoft::WRL::ComPtr<ID3D11DeviceContext> g_d3dContext;
 
+std::map<std::string, int> constBuffer_indexMap;
 
-std::map<ID3DX11EffectConstantBuffer*, int> constBuffer_indexMap;
+void WriteToFile(const std::string& path, const std::string & content);
+
+SJson::JsonNode convertShaderInfoToJson(const PEffectReflectionInfo& info);
+SJson::JsonNode GetGlobalVariablesJson(const std::vector<PEffectVariable> globalVariables);
+SJson::JsonNode GetConstBuffersJson(const std::vector<PEffectConstBuffer> constBuffers);
+SJson::JsonNode GetTechniquesJson(const std::vector<PEffectTechnique> techniques);
+SJson::JsonNode GetPassJson(const std::vector<PEffectPass> passes);
+SJson::JsonNode GetShadersJson(const std::vector<PEffectShader> shaders);
+SJson::JsonNode GetResourceBindingsJson(const std::vector<D3D11_SHADER_INPUT_BIND_DESC>&inputDesc);
+
+SJson::JsonNode GetVector4Json(const float vec[4]);
 
 
 void Usage()
@@ -104,7 +115,11 @@ Microsoft::WRL::ComPtr<ID3DX11Effect> GetEffect(const wchar_t* filename)
 CHECK_RESULT(("Failed to get " + std::string(#shaderType) + " desc").c_str(), shaders);\
 if (desc.pShaderVariable->IsValid())\
 {\
-    shaders.push_back({shaderType,ReflectShader(desc.pShaderVariable)});\
+    auto shaderDesc = ReflectShader(desc.pShaderVariable);\
+    if(shaderDesc)\
+    {\
+        shaders.push_back(PEffectShader{ ShaderType::##shaderType, shaderDesc}); \
+    }\
 }\
 
 std::shared_ptr<PShaderReflectData> ReflectShader(ID3DX11EffectShaderVariable* shader)
@@ -115,19 +130,24 @@ std::shared_ptr<PShaderReflectData> ReflectShader(ID3DX11EffectShaderVariable* s
     hr = shader->GetShaderDesc(0, &desc);
     CHECK_RESULT("Fail to get shader desc", nullptr);
 
+    if (!desc.pBytecode)
+    {
+        return nullptr;
+    }
+
     ID3D11ShaderReflection* reflector = nullptr;
     hr = D3DReflect(desc.pBytecode, desc.BytecodeLength, IID_ID3D11ShaderReflection, (void**)&reflector);
     CHECK_RESULT("Fail to reflect", nullptr);
 
-    reflector->GetDesc(&data.desc);
+    reflector->GetDesc(&data.Desc);
 
     std::vector<int> constBufferIndex;
-    for (size_t i = 0; i < data.desc.ConstantBuffers; i++)
+    for (size_t i = 0; i < data.Desc.ConstantBuffers; i++)
     {
         auto cb = reflector->GetConstantBufferByIndex(i);
         PShaderBuffer cbuffer;
-        hr = cb->GetDesc(&cbuffer.desc);
-        for (size_t j = 0; j < cbuffer.desc.Variables; j++)
+        hr = cb->GetDesc(&cbuffer.Desc);
+        for (size_t j = 0; j < cbuffer.Desc.Variables; j++)
         {
             auto variable = cb->GetVariableByIndex(j);
             D3D11_SHADER_VARIABLE_DESC vDesc;
@@ -137,16 +157,16 @@ std::shared_ptr<PShaderReflectData> ReflectShader(ID3DX11EffectShaderVariable* s
             D3D11_SHADER_TYPE_DESC tDesc;
             type->GetDesc(&tDesc);
 
-            cbuffer.variables.push_back(PShaderVariable{ vDesc, tDesc });
+            cbuffer.Variables.push_back(PShaderVariable{ vDesc, tDesc });
         }
-        data.constBuffers.push_back(cbuffer);
+        data.ConstBuffers.push_back(cbuffer);
     }
     
-    for (size_t i = 0; i < data.desc.BoundResources; i++)
+    for (size_t i = 0; i < data.Desc.BoundResources; i++)
     {
         D3D11_SHADER_INPUT_BIND_DESC rDesc;
         hr = reflector->GetResourceBindingDesc(i, &rDesc);
-        data.inputs.push_back(rDesc);
+        data.Inputs.push_back(rDesc);
     }
 
     return std::make_shared<PShaderReflectData>(data);
@@ -204,8 +224,6 @@ std::vector<PEffectPass> GetPasses(ID3DX11EffectTechnique* technique, const D3DX
         p.Desc = passDesc;
         p.Annotations = GetAnnotations(pass, passDesc);
         p.Shaders = GetShaders(pass);
-        
-
 
         passes.push_back(p);
     }
@@ -240,16 +258,14 @@ PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effec
         techniques.push_back(tech);
     }
 
-
     std::vector<PEffectConstBuffer> constBuffers;
     for (int i = 0; i < desc.ConstantBuffers; i++)
     {
         auto constBuffer = effect->GetConstantBufferByIndex(i);
-        constBuffer_indexMap[constBuffer] = constBuffers.size();
-
         D3DX11_EFFECT_VARIABLE_DESC constBufferDesc = {};
         hr = constBuffer->GetDesc(&constBufferDesc);
         CHECK_RESULT("Failed to get const buffer desc", info);
+        constBuffer_indexMap[constBufferDesc.Name] = constBuffers.size();
 
         PEffectConstBuffer p = {};
         p.Desc = constBufferDesc;
@@ -268,21 +284,27 @@ PEffectReflectionInfo GenerateReflectionData(Microsoft::WRL::ComPtr<ID3DX11Effec
         PEffectVariable p = {};
         p.Desc = varDesc;
         variable->GetType()->GetDesc(&p.Type);
-        globalVariables.push_back(p);
 
         auto constBuffer = variable->GetParentConstantBuffer();
         if (constBuffer->IsValid())
         {
-            if (constBuffer_indexMap.find(constBuffer) != constBuffer_indexMap.end())
+            D3DX11_EFFECT_VARIABLE_DESC constBufferDesc = {};
+            hr = constBuffer->GetDesc(&constBufferDesc);
+            CHECK_RESULT("Failed to get const buffer desc", info);
+            p.ParentConstBuffer = constBuffer;
+
+            if (constBuffer_indexMap.find(constBufferDesc.Name) != constBuffer_indexMap.end())
             {
-                int index = constBuffer_indexMap[constBuffer];
+                int index = constBuffer_indexMap[constBufferDesc.Name];
                 constBuffers[index].Variables.push_back(p);
             }
         }
+        globalVariables.push_back(p);
     }
 
     return PEffectReflectionInfo{ techniques, globalVariables, constBuffers };
 }
+
 
 int main(int argc, char** argv)
 {
@@ -304,5 +326,134 @@ int main(int argc, char** argv)
         return -1;
     }
     auto reflectionData = GenerateReflectionData(effect, effectDesc);
+    auto node = convertShaderInfoToJson(reflectionData);
+    SJson::JsonFormatOption option = {};
+    option.Inline = false;
+    option.KeysWithQuotes = true;
+    option.UseTab = false;
+    auto text = node.ToString(option);
+    WriteToFile("test.json", text);
     return 0;
+}
+
+
+void WriteToFile(const std::string& path, const std::string& content)
+{
+    std::ofstream ofStream;
+    ofStream.open(path);
+    if (ofStream.is_open())
+    {
+        ofStream << content << std::endl;
+    }
+    ofStream.close();
+}
+
+SJson::JsonNode convertShaderInfoToJson(const PEffectReflectionInfo& info)
+{
+    SJson::JsonNode rootNode;
+    // Just the name of parameters used for sanity check
+    rootNode["Parameters"] = GetGlobalVariablesJson(info.GlobalVariables);
+    rootNode["ConstBuffers"] = GetConstBuffersJson(info.ConstBuffers);
+    rootNode["Techniques"] = GetTechniquesJson(info.Techniques);
+    return rootNode;
+}
+
+
+SJson::JsonNode GetGlobalVariablesJson(const std::vector<PEffectVariable> variables)
+{
+    SJson::JsonNode node;
+    for (auto& var : variables)
+    {
+        SJson::JsonNode varNode;
+        varNode["Type"] = var.Type.TypeName;
+
+        // If there is no parent const buffer, then it must be a binded resource
+        varNode["ConstBufferOffset"] = (int)(var.ParentConstBuffer ? var.Desc.BufferOffset : -1);
+
+        //if (var.ParentConstBuffer)
+        //{
+        //    D3DX11_EFFECT_VARIABLE_DESC constBufferDesc = {};
+        //    var.ParentConstBuffer->GetDesc(&constBufferDesc);
+        //    varNode["ParentConstBuffer"] = constBufferDesc.Name;
+        //}
+        //else
+        //{
+        //    varNode["ParentConstBuffer"] = "";
+        //}
+        node[var.Desc.Name] = varNode;
+    }
+    return node;
+}
+
+SJson::JsonNode GetConstBuffersJson(const std::vector<PEffectConstBuffer> constBuffers)
+{
+    SJson::JsonNode node;
+    for (auto& buffer : constBuffers)
+    {
+        SJson::JsonNode bufferNode;
+        bufferNode["BindPoint"] = buffer.Desc.ExplicitBindPoint;
+        bufferNode["Variables"] = GetGlobalVariablesJson(buffer.Variables);
+        node[buffer.Desc.Name] = bufferNode;
+    }
+    return node;
+}
+
+SJson::JsonNode GetTechniquesJson(const std::vector<PEffectTechnique> techniques)
+{
+    SJson::JsonNode node;
+    for (auto& technique : techniques)
+    {
+        SJson::JsonNode techniqueNode;
+        techniqueNode["Passes"] = GetPassJson(technique.Passes);
+        node[technique.Desc.Name] = techniqueNode;
+    }
+    return node;
+}
+
+SJson::JsonNode GetPassJson(const std::vector<PEffectPass> passes)
+{
+    SJson::JsonNode node;
+    for (auto& pass : passes)
+    {
+        SJson::JsonNode passNode;
+        passNode["StencilRef"] = pass.Desc.StencilRef;
+        passNode["SampleMask"] = pass.Desc.SampleMask;
+        passNode["BlendFactor"] = GetVector4Json(pass.Desc.BlendFactor);
+
+        passNode["Shaders"] = GetShadersJson(pass.Shaders);
+        node[pass.Desc.Name] = passNode;
+    }
+    return node;
+}
+
+SJson::JsonNode GetShadersJson(const std::vector<PEffectShader> shaders)
+{
+    SJson::JsonNode node;
+    for (auto& shader : shaders)
+    {
+        SJson::JsonNode shaderNode;
+        shaderNode["Type"] = SRefl::EnumInfo<ShaderType>::enum_to_string(shader.ShaderType);
+        shaderNode["ResouceBindings"] = GetResourceBindingsJson(shader.Data->Inputs);
+        node.push_back(shaderNode);
+    }
+    return node;
+}
+
+SJson::JsonNode GetResourceBindingsJson(const std::vector<D3D11_SHADER_INPUT_BIND_DESC>& inputDesc)
+{
+    SJson::JsonNode node;
+    for (auto& input : inputDesc)
+    {
+        SJson::JsonNode inputNode;
+        inputNode["Type"] = (int)input.Type;
+        inputNode["BindPoint"] = input.BindPoint;
+        inputNode["BindCount"] = input.BindCount;
+        node[input.Name] = inputNode;
+    }
+    return node;
+}
+
+SJson::JsonNode GetVector4Json(const float vec[4])
+{
+    return SJson::JsonNode({vec[0], vec[1], vec[2], vec[3]});
 }

@@ -1,0 +1,408 @@
+{
+  "ConstBuffers": {
+    "$Globals": {
+      "BindPoint": 0, 
+      "Variables": {
+        "_TestVariable": {
+          "ConstBufferOffset": 0, 
+          "Type": "uint"
+        }
+      }
+    }, 
+    "cbSettings": {
+      "BindPoint": 0, 
+      "Variables": {
+        "_Center": {
+          "ConstBufferOffset": 132, 
+          "Type": "float2"
+        }, 
+        "_DeltaTime": {
+          "ConstBufferOffset": 144, 
+          "Type": "float"
+        }, 
+        "_Frames": {
+          "ConstBufferOffset": 148, 
+          "Type": "float"
+        }, 
+        "_MaximumDusts": {
+          "ConstBufferOffset": 128, 
+          "Type": "uint"
+        }, 
+        "_ModelTransform": {
+          "ConstBufferOffset": 0, 
+          "Type": "float4x4"
+        }, 
+        "_Multiplier": {
+          "ConstBufferOffset": 140, 
+          "Type": "float"
+        }, 
+        "_Scale": {
+          "ConstBufferOffset": 152, 
+          "Type": "float"
+        }, 
+        "_VPTransform": {
+          "ConstBufferOffset": 64, 
+          "Type": "float4x4"
+        }
+      }
+    }, 
+    "tileCollision": {
+      "BindPoint": 0, 
+      "Variables": {
+        "_TileSize": {
+          "ConstBufferOffset": 0, 
+          "Type": "float2"
+        }, 
+        "_TileStartOffset": {
+          "ConstBufferOffset": 8, 
+          "Type": "float2"
+        }
+      }
+    }
+  }, 
+  "Parameters": {
+    "_Center": {
+      "ConstBufferOffset": 132, 
+      "Type": "float2"
+    }, 
+    "_DeltaTime": {
+      "ConstBufferOffset": 144, 
+      "Type": "float"
+    }, 
+    "_DustTexture": {
+      "ConstBufferOffset": -1, 
+      "Type": "Texture2D"
+    }, 
+    "_Frames": {
+      "ConstBufferOffset": 148, 
+      "Type": "float"
+    }, 
+    "_MaximumDusts": {
+      "ConstBufferOffset": 128, 
+      "Type": "uint"
+    }, 
+    "_ModelTransform": {
+      "ConstBufferOffset": 0, 
+      "Type": "float4x4"
+    }, 
+    "_Multiplier": {
+      "ConstBufferOffset": 140, 
+      "Type": "float"
+    }, 
+    "_SamplerState": {
+      "ConstBufferOffset": -1, 
+      "Type": "SamplerState"
+    }, 
+    "_Scale": {
+      "ConstBufferOffset": 152, 
+      "Type": "float"
+    }, 
+    "_TestVariable": {
+      "ConstBufferOffset": 0, 
+      "Type": "uint"
+    }, 
+    "_TileSDF": {
+      "ConstBufferOffset": -1, 
+      "Type": "Texture2D"
+    }, 
+    "_TileSize": {
+      "ConstBufferOffset": 0, 
+      "Type": "float2"
+    }, 
+    "_TileStartOffset": {
+      "ConstBufferOffset": 8, 
+      "Type": "float2"
+    }, 
+    "_VPTransform": {
+      "ConstBufferOffset": 64, 
+      "Type": "float4x4"
+    }, 
+    "_dusts": {
+      "ConstBufferOffset": -1, 
+      "Type": "RWStructuredBuffer"
+    }, 
+    "_dustsDeadList": {
+      "ConstBufferOffset": -1, 
+      "Type": "RWStructuredBuffer"
+    }, 
+    "_dustsReadonly": {
+      "ConstBufferOffset": -1, 
+      "Type": "StructuredBuffer"
+    }
+  }, 
+  "Techniques": {
+    "GPUDraw": {
+      "Passes": {
+        "DrawDusts": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_dustsReadonly": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 5
+                }
+              }, 
+              "Type": "VertexShader"
+            }, 
+            {
+              "ResouceBindings": {
+                "_DustTexture": {
+                  "BindCount": 1, 
+                  "BindPoint": 1, 
+                  "Type": 2
+                }, 
+                "_SamplerState": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 3
+                }
+              }, 
+              "Type": "PixelShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "DrawDusts_Billboard": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "$Globals": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "VertexShader"
+            }, 
+            {
+              "ResouceBindings": {
+                "_DustTexture": {
+                  "BindCount": 1, 
+                  "BindPoint": 1, 
+                  "Type": 2
+                }, 
+                "_SamplerState": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 3
+                }
+              }, 
+              "Type": "PixelShader"
+            }, 
+            {
+              "ResouceBindings": {
+                "_dustsReadonly": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 5
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "GeometryShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "DrawDusts_Instanced": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_dustsReadonly": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 5
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "VertexShader"
+            }, 
+            {
+              "ResouceBindings": {
+                "_DustTexture": {
+                  "BindCount": 1, 
+                  "BindPoint": 1, 
+                  "Type": 2
+                }, 
+                "_SamplerState": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 3
+                }
+              }, 
+              "Type": "PixelShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "Reset": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": null, 
+          "StencilRef": 0
+        }
+      }
+    }, 
+    "GPUSimulation": {
+      "Passes": {
+        "ComputeVelocity": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_dusts": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 6
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "ComputeShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "InitializeDeadList": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_dustsDeadList": {
+                  "BindCount": 1, 
+                  "BindPoint": 2, 
+                  "Type": 6
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "ComputeShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "SpawnDusts": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_dusts": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 6
+                }, 
+                "_dustsDeadList": {
+                  "BindCount": 1, 
+                  "BindPoint": 2, 
+                  "Type": 6
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "ComputeShader"
+            }
+          ], 
+          "StencilRef": 0
+        }, 
+        "UpdatePosition": {
+          "BlendFactor": [
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000, 
+            0.00000000000000000
+          ], 
+          "SampleMask": 0, 
+          "Shaders": [
+            {
+              "ResouceBindings": {
+                "_TileSDF": {
+                  "BindCount": 1, 
+                  "BindPoint": 1, 
+                  "Type": 2
+                }, 
+                "_dusts": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 6
+                }, 
+                "cbSettings": {
+                  "BindCount": 1, 
+                  "BindPoint": 0, 
+                  "Type": 0
+                }, 
+                "tileCollision": {
+                  "BindCount": 1, 
+                  "BindPoint": 1, 
+                  "Type": 0
+                }
+              }, 
+              "Type": "ComputeShader"
+            }
+          ], 
+          "StencilRef": 0
+        }
+      }
+    }
+  }
+}

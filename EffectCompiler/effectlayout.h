@@ -17,6 +17,7 @@ struct PEffectVariable
 {
     D3DX11_EFFECT_VARIABLE_DESC Desc;
     D3DX11_EFFECT_TYPE_DESC Type;
+    ID3DX11EffectConstantBuffer* ParentConstBuffer;
 };
 
 struct PEffectConstBuffer
@@ -25,7 +26,7 @@ struct PEffectConstBuffer
     std::vector<PEffectVariable> Variables;
 };
 
-enum ShaderType
+enum class ShaderType
 {
     VertexShader,
     PixelShader,
@@ -35,27 +36,47 @@ enum ShaderType
     DomainShader,
 };
 
+template<>
+struct SRefl::EnumInfo<ShaderType>
+{
+    SREFL_TYPEINFO_HEADER(ShaderType);
+    constexpr static auto _ENUMLIST()
+    {
+        return std::make_tuple(
+            SREFL_ENUM_TERM(VertexShader),
+            SREFL_ENUM_TERM(PixelShader),
+            SREFL_ENUM_TERM(HullShader),
+            SREFL_ENUM_TERM(GeometryShader),
+            SREFL_ENUM_TERM(ComputeShader),
+            SREFL_ENUM_TERM(DomainShader)
+        );
+    }
+#define LISTFUNC(F) F(VertexShader) F(PixelShader) F(HullShader) F(GeometryShader) F(ComputeShader) F(DomainShader)
+    GENERATE_ENUM_MAPPING(ShaderType, LISTFUNC)
+#undef LISTFUNC
+};
+
 struct PShaderVariable
 {
-    D3D11_SHADER_VARIABLE_DESC desc;
-    D3D11_SHADER_TYPE_DESC type;
+    D3D11_SHADER_VARIABLE_DESC Desc;
+    D3D11_SHADER_TYPE_DESC Type;
 };
 struct PShaderBuffer
 {
-    D3D11_SHADER_BUFFER_DESC desc;
-    std::vector<PShaderVariable> variables;
+    D3D11_SHADER_BUFFER_DESC Desc;
+    std::vector<PShaderVariable> Variables;
 };
 struct PShaderReflectData
 {
-    D3D11_SHADER_DESC desc;
-    std::vector<PShaderBuffer> constBuffers;
-    std::vector<D3D11_SHADER_INPUT_BIND_DESC> inputs;
+    D3D11_SHADER_DESC Desc;
+    std::vector<PShaderBuffer> ConstBuffers;
+    std::vector<D3D11_SHADER_INPUT_BIND_DESC> Inputs;
 };
 
 struct PEffectShader
 {
-    unsigned int type;
-    std::shared_ptr<PShaderReflectData> data;
+    ShaderType ShaderType;
+    std::shared_ptr<PShaderReflectData> Data;
 };
 
 struct PEffectPass

@@ -147,6 +147,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="effectlayout.h" />
+    <ClInclude Include="SJson.hpp" />
+    <ClInclude Include="SRefl.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
